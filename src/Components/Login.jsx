@@ -5,17 +5,22 @@ const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const Login = () => {
+
   const [credentials, setCredentials] = useState({
-    email: "",
+    identifier: "",
     password: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
+
   const [error, setError] = useState(null);
+
   const [rememberMe, setRememberMe] = useState(false);
+
   const [loginSuccess, setLoginSuccess] = useState(false);
 
   const handleChange = (e) => {
+
     const { name, value } = e.target;
 
     setCredentials((prev) => ({
@@ -23,48 +28,111 @@ const Login = () => {
       [name]: value,
     }));
 
-    if (error) setError(null);
+    if (error) {
+      setError(null);
+    }
+
   };
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
 
     setIsLoading(true);
+
     setError(null);
+
     setLoginSuccess(false);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(credentials),
-      });
+
+      // SEND IDENTIFIER + PASSWORD
+
+      const payload = {
+
+        identifier: credentials.identifier,
+
+        password: credentials.password,
+
+      };
+
+      const response = await fetch(
+        `${API_BASE_URL}/login`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok && data) {
+
         setLoginSuccess(true);
 
+        // STORE TOKEN
+
         if (data.access_token) {
-          localStorage.setItem("token", data.access_token);
+
+          localStorage.setItem(
+            "token",
+            data.access_token
+          );
+
         }
 
+        // STORE USER DATA
+
+        localStorage.setItem(
+          "user_name",
+          data.name || ""
+        );
+
+        localStorage.setItem(
+          "username",
+          data.username || ""
+        );
+
+        localStorage.setItem(
+          "role",
+          data.role || ""
+        );
+
+        // STORE REMEMBER LOGIN
+
         if (rememberMe) {
-          localStorage.setItem("rememberedEmail", credentials.email);
+
+          localStorage.setItem(
+            "rememberedIdentifier",
+            credentials.identifier
+          );
+
         } else {
-          localStorage.removeItem("rememberedEmail");
+
+          localStorage.removeItem(
+            "rememberedIdentifier"
+          );
+
         }
 
         alert(
-          `Login Successful!\n\nWelcome back, ${credentials.email}!\nYou will be redirected to the dashboard.`
+          `Login Successful!\n\nWelcome back, ${data.name || credentials.identifier}!\n\nRole: ${data.role}\n\nYou will be redirected to the dashboard.`
         );
 
         setTimeout(() => {
-          window.location.href = "/dashboard";
+
+          window.location.href =
+            "/dashboard";
+
         }, 1500);
+
       } else {
+
         const errorMessage =
           data.detail ||
           data.message ||
@@ -75,9 +143,15 @@ const Login = () => {
         alert(
           `Login Failed!\n\n${errorMessage}\n\nPlease check your credentials and try again.`
         );
+
       }
+
     } catch (err) {
-      console.error("Login error:", err);
+
+      console.error(
+        "Login error:",
+        err
+      );
 
       const errorMsg =
         err instanceof Error
@@ -89,30 +163,47 @@ const Login = () => {
       alert(
         `Connection Error!\n\n${errorMsg}\n\nPlease check your internet connection and try again.`
       );
+
     } finally {
+
       setIsLoading(false);
+
     }
+
   };
 
   useEffect(() => {
-    const rememberedEmail = localStorage.getItem("rememberedEmail");
 
-    if (rememberedEmail) {
+    const rememberedIdentifier =
+      localStorage.getItem(
+        "rememberedIdentifier"
+      );
+
+    if (rememberedIdentifier) {
+
       setCredentials((prev) => ({
         ...prev,
-        email: rememberedEmail,
+        identifier:
+          rememberedIdentifier,
       }));
 
       setRememberMe(true);
+
     }
+
   }, []);
 
   return (
     <>
+
       <div className="login-main-container">
+
         <div className="login-card-container">
+
           <div className="login-inner-box">
+
             <div className="logo-section">
+
               <img
                 src={logoImage}
                 alt="Venwind Logo"
@@ -122,55 +213,86 @@ const Login = () => {
                 }}
               />
 
-              <h5 className="welcome-title">WELCOME</h5>
+              <h5 className="welcome-title">
+                WELCOME
+              </h5>
+
             </div>
 
             <form onSubmit={handleSubmit}>
+
               <table className="login-table">
+
                 <tbody>
+
+                  {/* IDENTIFIER */}
+
                   <tr>
+
                     <td>
+
                       <input
-                        type="email"
-                        name="email"
-                        value={credentials.email}
+                        type="text"
+                        name="identifier"
+                        value={
+                          credentials.identifier
+                        }
                         onChange={handleChange}
-                        placeholder="Enter your Email ID"
+                        placeholder="Enter Email ID or Username"
                         required
+                        autoComplete="off"
                         disabled={isLoading}
                         className="input-field"
                       />
+
                     </td>
+
                   </tr>
 
+                  {/* PASSWORD */}
+
                   <tr>
+
                     <td>
+
                       <input
                         type="password"
                         name="password"
-                        value={credentials.password}
+                        value={
+                          credentials.password
+                        }
                         onChange={handleChange}
                         placeholder="Password"
                         required
+                        autoComplete="new-password"
                         disabled={isLoading}
                         className="input-field"
                       />
 
                       <div className="forgot-password">
+
                         <a href="/forgot-password">
                           Forgot password?
                         </a>
+
                       </div>
+
                     </td>
+
                   </tr>
 
+                  {/* BUTTON */}
+
                   <tr>
+
                     <td>
+
                       <button
                         type="submit"
                         disabled={isLoading}
                         className="login-button"
                       >
+
                         {isLoading ? (
                           <>
                             <span className="loading-spinner"></span>
@@ -179,24 +301,40 @@ const Login = () => {
                         ) : (
                           "Login"
                         )}
+
                       </button>
+
                     </td>
+
                   </tr>
+
                 </tbody>
+
               </table>
+
             </form>
 
+            {/* SIGNUP */}
+
             <div className="signup-section">
-              <a href="/register" className="signup-link">
+
+              <a
+                href="/register"
+                className="signup-link"
+              >
                 Don't Have Account? - SignUp
               </a>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
 
       <style>{`
-      
+
         *{
           box-sizing:border-box;
         }
@@ -205,7 +343,7 @@ const Login = () => {
           margin:0;
           padding:0;
           overflow-x:hidden;
-          font-family: Arial, sans-serif;
+          font-family:Arial,sans-serif;
         }
 
         .login-main-container{
@@ -219,7 +357,7 @@ const Login = () => {
         }
 
         .login-card-container{
-          background-color:rgb(198, 207, 88);
+          background-color:rgb(198,207,88);
           border-radius:15px;
           padding:25px;
           box-shadow:0 10px 25px rgba(0,0,0,0.1);
@@ -228,7 +366,7 @@ const Login = () => {
         }
 
         .login-inner-box{
-          background-color:rgb(244, 243, 226);
+          background-color:rgb(244,243,226);
           border-radius:12px;
           padding:25px;
           box-shadow:0 2px 10px rgba(225,190,64,0.05);
@@ -276,7 +414,7 @@ const Login = () => {
         }
 
         .input-field:focus{
-          border-color:rgb(198, 207, 88);
+          border-color:rgb(198,207,88);
           background-color:white;
           box-shadow:0 0 0 3px rgba(198,207,88,0.1);
         }
@@ -300,6 +438,14 @@ const Login = () => {
         .forgot-password a:hover{
           color:#3e95ec;
           text-decoration:underline;
+        }
+
+        .remember-section{
+          display:flex;
+          align-items:center;
+          gap:8px;
+          font-size:13px;
+          color:#333;
         }
 
         .login-button{
@@ -367,45 +513,10 @@ const Login = () => {
             transform:rotate(360deg);
           }
         }
-        @media screen and (min-width: 1920px){
+
+        @media screen and (max-width:768px){
 
           .login-card-container{
-            max-width:520px;
-            padding:30px;
-          }
-
-          .login-inner-box{
-            padding:30px;
-          }
-
-          .welcome-title{
-            font-size:32px;
-          }
-
-          .input-field{
-            font-size:16px;
-            padding:14px 16px;
-          }
-
-          .login-button{
-            font-size:18px;
-            padding:12px 25px;
-          }
-        }
-        @media screen and (max-width: 1440px){
-
-          .login-card-container{
-            max-width:450px;
-          }
-        }
-        @media screen and (max-width: 768px){
-
-          .login-main-container{
-            padding:15px;
-          }
-
-          .login-card-container{
-            max-width:100%;
             padding:20px;
           }
 
@@ -413,74 +524,13 @@ const Login = () => {
             padding:20px;
           }
 
-          .logo-image{
-            width:120px;
-            height:50px;
-          }
-
-          .welcome-title{
-            font-size:24px;
-          }
-
-          .input-field{
-            font-size:13px;
-            padding:11px 14px;
-          }
-
           .login-button{
             width:100%;
-            font-size:15px;
           }
+
         }
-        @media screen and (max-width: 480px){
 
-          .login-main-container{
-            padding:12px;
-          }
-
-          .login-card-container{
-            padding:15px;
-            border-radius:12px;
-          }
-
-          .login-inner-box{
-            padding:15px;
-          }
-
-          .logo-image{
-            width:100px;
-            height:45px;
-            margin-bottom:15px;
-          }
-
-          .welcome-title{
-            font-size:20px;
-          }
-
-          .input-field{
-            padding:10px 12px;
-            font-size:12px;
-          }
-
-          .forgot-password a{
-            font-size:11px;
-          }
-
-          .login-button{
-            width:100%;
-            padding:10px;
-            font-size:14px;
-          }
-
-          .signup-link{
-            font-size:13px;
-          }
-        }
-        @media screen and (max-height: 700px){
-
-          .login-main-container{
-            padding:10px;
-          }
+        @media screen and (max-width:480px){
 
           .login-card-container{
             padding:15px;
@@ -490,16 +540,18 @@ const Login = () => {
             padding:15px;
           }
 
-          .logo-section{
-            margin-bottom:18px;
+          .welcome-title{
+            font-size:22px;
           }
 
-          .welcome-title{
-            font-size:20px;
+          .input-field{
+            font-size:13px;
           }
+
         }
 
       `}</style>
+
     </>
   );
 };
